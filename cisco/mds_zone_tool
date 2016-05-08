@@ -1,0 +1,52 @@
+#!/usr/bin/env python
+
+import argparse
+import pprint
+import re
+import sys
+
+def usage():
+    print '{0} [path]'.format(sys.argv[0])
+    exit()
+
+if __name__ == '__main__':
+   
+    parser = argparse.ArgumentParser(prog='mds_zone_tool')
+    parser.add_argument('--active', action='store_true', default=False,
+            help='Display active zones')
+    parser.add_argument('--inactive', action='store_true', default=False,
+            help='Display inactive zones')
+    parser.add_argument('file',
+            help='path to the file with list of zones')
+    args = parser.parse_args()
+
+    zones = dict()
+
+    f = open(vars(args)['file'], 'r')
+
+    for line in f:
+
+        m = re.match('zone name (\S+) vsan (\d+)', line)
+
+        if m is not None:
+            name = m.group(1)
+            vsan = m.group(2)
+
+            zone = dict()
+            zone['vsan'] = vsan
+            zone['name'] = name
+            zone['state'] = 0
+
+            zones[name] = zone
+
+        m = re.match('\*.*', line)
+
+        if m is not None:
+            zones[name]['state'] = 1
+
+    for zone in zones:
+        if vars(args)['active'] and zones[zone]['state'] == 1:
+            print zones[zone]['name']
+
+        if vars(args)['inactive'] and zones[zone]['state'] == 0:
+            print zones[zone]['name']
